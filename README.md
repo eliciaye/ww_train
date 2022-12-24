@@ -1,14 +1,15 @@
-Use `resnet_train.py`
-
-CIFAR100 data loaders in `data.py`
-
-ResNet models in `resnet_widths_all.py`, selectable depth and customizable width
-
-`train()` and `test()` functions in `training.py`
+### Use `resnet_train.py`
 
 Optimizer customizations in `utils.py`
 
-Customize Arguments (for default values, see the ArgParser section in `resnet_train.py`)
+CIFAR100 data loaders in `data.py`
+
+`train()` and `test()` functions in `training.py`
+
+ResNet models in `resnet_widths_all.py`, selectable depth and customizable width
+
+
+### Customize Arguments (for default values, see the ArgParser section in `resnet_train.py`)
 
 `--lr`: initial learning rate (follow SGD)
 
