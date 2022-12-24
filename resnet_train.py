@@ -41,9 +41,12 @@ parser.add_argument('--datadir', default='/work/eliciaye/', help='directory of d
 parser.add_argument('--width_frac', default=1.0,type=float, help='fraction of original width')
 parser.add_argument(
     '--sample_evals',
-    '-r',
     action='store_true',
     help='sample eigenvalues and replace during ww SVD analysis')
+parser.add_argument(
+    '--constant_lr',
+    action='store_true',
+    help='use same LR throughout training')
 parser.add_argument(
     '--lr_rewind',
     action='store_true',
@@ -125,7 +128,7 @@ epoch_layer_lrs = [[] for _ in range(n)]
 epoch_layer_alphas = [[] for _ in range(n)]
 
 cosine_anneal_lr_timeline = [args.lr * (1 + math.cos((epoch + 1) * math.pi / args.epochs)) / 2 for epoch in range(args.epochs)]
-layerwise_lr_timeline_idx = np.repeat(0, len(param_groups))
+layerwise_lr_timeline_idx = np.repeat(0, n)
 
 prev_epoch_alphas = []
 
@@ -159,7 +162,7 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
     n_alphas=[details.loc[i, 'alpha'] for i in range(n)]
     print(len(n_alphas),"alphas: ",n_alphas)
 
-    epoch_lr = args.lr * (1 + math.cos((epoch + 1) * math.pi / args.epochs)) / 2
+    epoch_lr = args.lr if args.constant_lr else args.lr * (1 + math.cos((epoch + 1) * math.pi / args.epochs)) / 2
     epoch_wd = args.wd # change if use weight decay schedule
 
     all_params=[]
@@ -198,8 +201,8 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
 TOP_VALS = 5
 epoch_trainaccs.sort(reverse=True)
 epoch_testaccs.sort(reverse=True)
-epoch_trainaccs_final = (epoch_trainaccs[:TOP_VALS]) / TOP_VALS
-epoch_testaccs_final = (epoch_testaccs[:TOP_VALS]) / TOP_VALS
+epoch_trainaccs_final = sum(epoch_trainaccs[:TOP_VALS]) / TOP_VALS
+epoch_testaccs_final = sum(epoch_testaccs[:TOP_VALS]) / TOP_VALS
 
 print("Epoch {}, Test Acc = {}\nFinal Train Acc = {}\n".format(args.epochs,epoch_testaccs_final,epoch_trainaccs_final))
 

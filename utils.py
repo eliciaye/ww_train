@@ -1,8 +1,9 @@
 import numpy as np
+from operator import itemgetter
 
 def get_layer_temps(temp_balance,n_alphas,epoch_val):
     n = len(n_alphas)
-    idx = [i for i in range(n_alphas)]
+    idx = [i for i in range(n)]
     temps = np.array([epoch_val] * n)
 
     if temp_balance == 'tbr':
@@ -45,4 +46,5 @@ def get_layer_temps(temp_balance,n_alphas,epoch_val):
         samples = np.sort(np.random.normal(np.mean(n_alphas),np.sqrt(1+np.var(n_alphas)),n))
         samples = samples - min(samples)
         samples_prob = np.divide(samples,np.sum(samples))
+        temps = samples_prob * n * epoch_val
     return [value for index, value in sorted(list(zip(idx, temps)), key=itemgetter(0))]
