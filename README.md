@@ -19,13 +19,13 @@ ResNet models in `resnet_widths_all.py`, selectable depth and customizable width
 
 `--wd`: initial weight decay, constant for now
 
-`--width_frac`: percentage of original model width, can be `>1`
+`--width_frac`: percentage of original model width, can be $>1$
 
 `--sample_evals`: sample eigenvalues and replace during ww SVD analysis
 
 `--lr_rewind`: learning rate rewinding: if layer alpha increases too much from previous epoch, set learning rate schedule back 20 epochs
 
-`--wd_alpha_schedule`: layerwise weight decays by ratio alpha_t / alpha_{t-1}
+`--wd_alpha_schedule`: layerwise weight decays by ratio $\frac{\alpha_t}{\alpha_{t-1}}$
 
 `--temp_balance_lr`: layerwise learning rate assignment fn
 
