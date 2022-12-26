@@ -19,7 +19,6 @@ from copy import deepcopy
 from training import train, test
 
 import resnet_widths_all
-import resnet_width_4
 import data
 from utils import *
 
@@ -51,6 +50,10 @@ parser.add_argument(
     '--lr_rewind',
     action='store_true',
     help='learning rate rewinding')
+parser.add_argument(
+    '--wd_alpha_schedule',
+    action='store_true',
+    help='weight change set by alpha ratio')
 parser.add_argument(
     '--resume',
     '-r',
@@ -131,7 +134,7 @@ cosine_anneal_lr_timeline = [args.lr * (1 + math.cos((epoch + 1) * math.pi / arg
 layerwise_lr_timeline_idx = np.repeat(0, n)
 
 prev_epoch_alphas = []
-
+prev_epoch_wds = []
 for epoch in range(start_epoch, start_epoch+args.epochs):
     trainacc, train_loss = train(epoch, net, trainloader, device, optimizer, criterion)
     epoch_trainaccs.append(trainacc)
@@ -142,7 +145,13 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
     print("Finished evaluating Epoch {}. Test Acc = {}\nTest loss={}\n".format(epoch,testacc,test_loss))
 
     watcher = ww.WeightWatcher(model=net)
-    details = watcher.analyze(vectors=False, plot=True, savefig=args.checkpoint+'/before_train', fix_fingers=False, fit=PL, sample_evals=args.sample_evals)
+    if not epoch % 20:
+        figdir = args.checkpoint+'/esd{}'.format(epoch)
+        if not os.path.isdir(figdir):
+            os.makedirs(figdir)
+        details = watcher.analyze(vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=PL, sample_evals=args.sample_evals)
+    else:
+        details = watcher.analyze(vectors=False, fix_fingers=False, fit=PL, sample_evals=args.sample_evals)
 
     details_path = os.path.join(args.checkpoint, 'details.csv')
     details.to_csv(details_path)
@@ -153,6 +162,8 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
 
     ww_params = []
     other_params = []
+    # for name,para in net.named_modules():
+    #   if (isinstance(para, nn.Linear) or isinstance(para,nn.Sequential) or isinstance(para,nn.Conv2d)) and hasattr(para, 'weight'):
     for name,para in net.named_parameters():
         if ('conv' in name or 'shortcut.0' in name or 'linear' in name) and ('weight' in name):
             ww_params.append(para)
@@ -166,17 +177,22 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
     epoch_wd = args.wd # change if use weight decay schedule
 
     all_params=[]
-    lrs = get_layer_temps(args.temp_balance_lr,n_alphas,epoch_lr)
+    
     if epoch > 0 and args.lr_rewind:
         alpha_ratios = np.divide(n_alphas,prev_epoch_alphas)
-        layerwise_lr_timeline_idx[alpha_ratios>1.5] = min(0,epoch-20)
+        layerwise_lr_timeline_idx[alpha_ratios>1.5] = max(0,epoch-20)
         lrs = [cosine_anneal_lr_timeline[layerwise_lr_timeline_idx[i]] for i in range(n)]
-        prev_epoch_alphas=n_alphas
+    else:
+        lrs = get_layer_temps(args.temp_balance_lr,n_alphas,epoch_lr)
     for i in range(n):
         epoch_layer_lrs[i].append(lrs[i])
     print("Layerwise learning rates for epoch {}:".format(epoch),lrs)
     
-    wds = get_layer_temps(args.temp_balance_wd,n_alphas,epoch_wd) 
+    if epoch > 0 and args.wd_alpha_schedule:
+        alpha_ratios = np.divide(n_alphas,prev_epoch_alphas)
+        wds = np.multiply(prev_epoch_wds, alpha_ratios) 
+    else:
+        wds = get_layer_temps(args.temp_balance_wd,n_alphas,epoch_wd) 
     
     for i in range(n):
         all_params.append({'params': ww_params[i],
@@ -185,7 +201,7 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
 
     all_params.append({'params': other_params})
     optimizer = torch.optim.SGD(all_params, lr=epoch_lr, momentum=0.9, weight_decay=epoch_wd)
-
+    
     if testacc > best_acc:
         print('Saving...')
         state = {
@@ -197,6 +213,9 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
             os.mkdir(args.checkpoint)
         torch.save(state, args.checkpoint + '/ckpt.pth')
         best_acc = testacc
+    
+    prev_epoch_alphas=n_alphas
+    prev_epoch_wds=np.array(wds)
 
 TOP_VALS = 5
 epoch_trainaccs.sort(reverse=True)
