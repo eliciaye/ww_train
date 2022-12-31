@@ -1,6 +1,6 @@
 #!/bin/bash
 ##SBATCH --array=1,6,11,16,21,2,7,12,17,22,26,31,36,41,46,27,32,37,42,47
-#SBATCH --array=54,64-72,74-78,81-84,9-12,15-18,21-24,25,27,33-36,39-42
+#SBATCH --array=73-96
 #SBATCH -p rise # partition (queue)
 #SBATCH -D /home/eecs/eliciaye/ww_train
 #SBATCH --exclude=freddie,havoc,r4,r16,atlas,blaze,flaminio,manchester,pavia,como,luigi,steropes,bombe
@@ -31,7 +31,7 @@ datadir=/work/eliciaye
 epochs=200
 mkdir -p $SAVE
 arch_max=0.99
-seed=5
+seed=7
 
-python resnet_train.py --temp_balance_lr tbr --depth $depth --width_frac $width_frac --checkpoint $SAVE --lr $lr --epochs $epochs --seed $seed
+python resnet_train.py --temp_balance_wd tbr --depth $depth --width_frac $width_frac --checkpoint $SAVE --lr $lr --epochs $epochs --seed $seed
 echo "All done."

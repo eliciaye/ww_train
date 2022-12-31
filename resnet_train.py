@@ -53,7 +53,7 @@ parser.add_argument(
 parser.add_argument(
     '--wd_alpha_schedule',
     action='store_true',
-    help='weight change set by alpha ratio')
+    help='weight decay change set by alpha ratio')
 parser.add_argument(
     '--resume',
     '-r',
@@ -149,9 +149,9 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
         figdir = args.checkpoint+'/esd{}'.format(epoch)
         if not os.path.isdir(figdir):
             os.makedirs(figdir)
-        details = watcher.analyze(vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=PL, sample_evals=args.sample_evals)
+        details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=PL, sample_evals=args.sample_evals)
     else:
-        details = watcher.analyze(vectors=False, fix_fingers=False, fit=PL, sample_evals=args.sample_evals)
+        details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=PL, sample_evals=args.sample_evals)
 
     details_path = os.path.join(args.checkpoint, 'details.csv')
     details.to_csv(details_path)
@@ -180,7 +180,7 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
     
     if epoch > 0 and args.lr_rewind:
         alpha_ratios = np.divide(n_alphas,prev_epoch_alphas)
-        layerwise_lr_timeline_idx[alpha_ratios>1.5] = max(0,epoch-20)
+        layerwise_lr_timeline_idx[alpha_ratios>1.5] = max(0,epoch-10)
         lrs = [cosine_anneal_lr_timeline[layerwise_lr_timeline_idx[i]] for i in range(n)]
     else:
         lrs = get_layer_temps(args.temp_balance_lr,n_alphas,epoch_lr)

@@ -26,9 +26,9 @@ def get_layer_temps(temp_balance,n_alphas,epoch_val):
         temps = neg_pow2  * n * epoch_val
     elif temp_balance == 'softmax':
         temps = np.exp(n_alphas)/np.sum(np.exp(n_alphas)) * n * epoch_val
-    elif temp_balance == 'sample_lr':
+    elif temp_balance == 'sample_val':
         idx = np.argsort(n_alphas)
-        samples = np.sort(np.random.normal(epoch_val,epoch_val/2,n))
+        samples = np.sort(np.random.normal(epoch_val,np.sqrt(epoch_val),n))
         # shift to make nonnegative
         samples = samples - min(samples)
         samples_prob = np.divide(samples,np.sum(samples))
@@ -36,7 +36,7 @@ def get_layer_temps(temp_balance,n_alphas,epoch_val):
     elif temp_balance == 'sample_alpha':
         samples = []
         for i in range(n):
-            samples.append(np.random.normal(n_alphas[i],1,1).item())
+            samples.append(np.random.normal(n_alphas[i],np.sqrt(n_alphas[i]),1).item())
         samples=np.array(samples)
         samples = samples - min(samples)
         samples_prob = np.divide(samples,np.sum(samples))
