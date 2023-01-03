@@ -25,8 +25,6 @@ from utils import *
 os.environ["OMP_NUM_THREADS"] = "1"
 TRUNCATED_POWER_LAW = 'truncated_power_law'
 XMIN_PEAK = 'xmin_peak'
-E_TPL = 'E_TPL'
-PL = 'PL'
 
 warnings.simplefilter(action='ignore',category=FutureWarning)
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
@@ -51,9 +49,9 @@ parser.add_argument(
     action='store_true',
     help='learning rate rewinding')
 parser.add_argument(
-    '--wd_alpha_schedule',
+    '--wd_metric_schedule',
     action='store_true',
-    help='weight decay change set by alpha ratio')
+    help='weight decay change set by metric ratio')
 parser.add_argument(
     '--resume',
     '-r',
@@ -78,6 +76,16 @@ parser.add_argument(
     type=str,
     default='',
     help='use tempbalance for weight decay')
+parser.add_argument(
+    '--metric',
+    type=str,
+    default='alpha',
+    help='ww metric')
+parser.add_argument(
+    '--fit',
+    type=str,
+    default='PL',
+    help='ESD fit')
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -125,15 +133,15 @@ epoch_testaccs=[]
 best_acc = 0.
 
 watcher = ww.WeightWatcher(model=net)
-details = watcher.analyze(vectors=False, fix_fingers=False, fit=PL)
+details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=args.fit)
 n = details.shape[0]
 epoch_layer_lrs = [[] for _ in range(n)]
-epoch_layer_alphas = [[] for _ in range(n)]
+epoch_layer_metrics = [[] for _ in range(n)]
 
 cosine_anneal_lr_timeline = [args.lr * (1 + math.cos((epoch + 1) * math.pi / args.epochs)) / 2 for epoch in range(args.epochs)]
 layerwise_lr_timeline_idx = np.repeat(0, n)
 
-prev_epoch_alphas = []
+prev_epoch_metrics = []
 prev_epoch_wds = []
 for epoch in range(start_epoch, start_epoch+args.epochs):
     trainacc, train_loss = train(epoch, net, trainloader, device, optimizer, criterion)
@@ -145,20 +153,20 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
     print("Finished evaluating Epoch {}. Test Acc = {}\nTest loss={}\n".format(epoch,testacc,test_loss))
 
     watcher = ww.WeightWatcher(model=net)
-    if not epoch % 20:
+    if not epoch or epoch == 199:
         figdir = args.checkpoint+'/esd{}'.format(epoch)
         if not os.path.isdir(figdir):
             os.makedirs(figdir)
-        details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=PL, sample_evals=args.sample_evals)
+        details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=args.fit, sample_evals=args.sample_evals)
     else:
-        details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=PL, sample_evals=args.sample_evals)
+        details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=args.fit, sample_evals=args.sample_evals)
 
     details_path = os.path.join(args.checkpoint, 'details.csv')
     details.to_csv(details_path)
 
     n = details.shape[0]
     for i in range(n):
-        epoch_layer_alphas[i].append(details.loc[i,'alpha'])
+        epoch_layer_metrics[i].append(details.loc[i,args.metric])
 
     ww_params = []
     other_params = []
@@ -170,8 +178,8 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
         else:
             other_params.append(para)
 
-    n_alphas=[details.loc[i, 'alpha'] for i in range(n)]
-    print(len(n_alphas),"alphas: ",n_alphas)
+    n_metrics=[details.loc[i, args.metric] for i in range(n)]
+    print(len(n_metrics),"metrics: ",n_metrics)
 
     epoch_lr = args.lr if args.constant_lr else args.lr * (1 + math.cos((epoch + 1) * math.pi / args.epochs)) / 2
     epoch_wd = args.wd # change if use weight decay schedule
@@ -179,20 +187,20 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
     all_params=[]
     
     if epoch > 0 and args.lr_rewind:
-        alpha_ratios = np.divide(n_alphas,prev_epoch_alphas)
-        layerwise_lr_timeline_idx[alpha_ratios>1.5] = max(0,epoch-10)
+        metric_ratios = np.divide(n_metrics,prev_epoch_metrics)
+        layerwise_lr_timeline_idx[metric_ratios>1.5] = max(0,epoch-10)
         lrs = [cosine_anneal_lr_timeline[layerwise_lr_timeline_idx[i]] for i in range(n)]
     else:
-        lrs = get_layer_temps(args.temp_balance_lr,n_alphas,epoch_lr)
+        lrs = get_layer_temps(args.temp_balance_lr,n_metrics,epoch_lr)
     for i in range(n):
         epoch_layer_lrs[i].append(lrs[i])
     print("Layerwise learning rates for epoch {}:".format(epoch),lrs)
     
-    if epoch > 0 and args.wd_alpha_schedule:
-        alpha_ratios = np.divide(n_alphas,prev_epoch_alphas)
-        wds = np.multiply(prev_epoch_wds, alpha_ratios) 
+    if epoch > 0 and args.wd_metric_schedule:
+        metric_ratios = np.divide(n_metrics,prev_epoch_metrics)
+        wds = np.multiply(prev_epoch_wds, metric_ratios) 
     else:
-        wds = get_layer_temps(args.temp_balance_wd,n_alphas,epoch_wd) 
+        wds = get_layer_temps(args.temp_balance_wd,n_metrics,epoch_wd) 
     
     for i in range(n):
         all_params.append({'params': ww_params[i],
@@ -214,7 +222,7 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
         torch.save(state, args.checkpoint + '/ckpt.pth')
         best_acc = testacc
     
-    prev_epoch_alphas=n_alphas
+    prev_epoch_metrics=n_metrics
     prev_epoch_wds=np.array(wds)
 
 TOP_VALS = 5
@@ -233,7 +241,7 @@ with open(summary_path,'w+') as f:
     f.write('Final Test Accuracy='+str(epoch_testaccs_final) + '\n')
     for m in range(len(epoch_layer_lrs)):
         f.write('lr_layer{}='.format(m+1)+str(epoch_layer_lrs[m])+'\n')
-    for m in range(len(epoch_layer_alphas)):
-        f.write('alpha_layer{}='.format(m+1)+str(epoch_layer_alphas[m])+'\n')
+    for m in range(len(epoch_layer_metrics)):
+        f.write('metric_layer{}='.format(m+1)+str(epoch_layer_metrics[m])+'\n')
 
     f.close()

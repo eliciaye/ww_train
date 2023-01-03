@@ -6,7 +6,7 @@ def get_avg5_accs(filename,ids):
     test,train=[],[]
     for i in ids:
         testi,traini=[],[]
-        output_file="{}_{}.out".format(filename,i)
+        output_file="{}-{}.out".format(filename,i)
         with open(output_file) as f:
             print(output_file)
             for line in f:
@@ -41,7 +41,7 @@ def get_avg5_accs(filename,ids):
 def get_accs(filename, ids):
     test,train=[],[]
     for i in ids:
-        output_file="{}_{}.out".format(filename,i)
+        output_file="{}-{}.out".format(filename,i)
         with open(output_file) as f:
             print(output_file)
             found_test=found_train=False
@@ -74,7 +74,7 @@ def get_accs(filename, ids):
 def get_train_accs(filename,ids):
     train=[]
     for i in ids:
-        output_file="{}_{}.out".format(filename,i)
+        output_file="{}-{}.out".format(filename,i)
         with open(output_file) as f:
             for line in f:
                 if "Train Acc" in line and "Final" not in line:
@@ -86,7 +86,7 @@ def get_train_accs(filename,ids):
 def get_test_accs(filename,ids):
     for i in ids:
         test=[]
-        output_file="{}_{}.out".format(filename,i)
+        output_file="{}-{}.out".format(filename,i)
         with open(output_file) as f:
             for line in f:
                 if ("Test acc" in line or "Test Acc" in line) and "Epoch 200" not in line:
@@ -100,7 +100,7 @@ def get_test_accs(filename,ids):
 def get_train_loss(filename,ids):
     for i in ids:
         train=[]
-        output_file="{}_{}.out".format(filename,i)
+        output_file="{}-{}.out".format(filename,i)
         with open(output_file) as f:
             for line in f:
                 if "Train loss" in line:
@@ -111,7 +111,7 @@ def get_train_loss(filename,ids):
 def get_test_loss(filename,ids):
     test=[]
     for i in ids:
-        output_file="{}_{}.out".format(filename,i)
+        output_file="{}-{}.out".format(filename,i)
         with open(output_file) as f:
             for line in f:
                 if "Test loss" in line:
@@ -120,19 +120,7 @@ def get_test_loss(filename,ids):
     print("test_loss=",test)
 
 
-FILENAME='resnet_avg_wdonly_58778'
-# IDS=[26,31,36,41,46,27,32,37,42,47]+list(range(73,97))
-# IDS=[1,6,11,16,21,2,7,12,17,22,26,31,36,41,46,27,32,37,42,47]
-# IDS=[1,6,11,16,21,2,7,12,17,22,36,41,46,37,42,47]
-# IDS=[3,4,5,8,9,10,13,14,15,18,19,20,23,24,25,28,29,30,33,34,35,38,39,40,43,44,45,48,49,50]
-# IDS=[11,16,21,12,17,22,36,41,46,37,42,47]
-IDS=list(range(73,91))
-# FILENAME='resnet_wdorlr_57908'
-# IDS=list(range(1,13))+list(range(37,49))
-# IDS=[26,31,36,41,46,27,32,37,42,47]
+FILENAME='PL-alpha-tbr'
+IDS=list(range(36))
 
 get_accs(FILENAME,IDS)
-# FILENAME='output'
-# IDS=[58066,58067]
-# get_test_accs(FILENAME,IDS)
-# get_train_loss(FILENAME,IDS)
