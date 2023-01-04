@@ -157,9 +157,11 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
         figdir = args.checkpoint+'/esd{}'.format(epoch)
         if not os.path.isdir(figdir):
             os.makedirs(figdir)
-        details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=args.fit, sample_evals=args.sample_evals)
+        details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=args.fit)
+        # details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=args.fit, sample_evals=args.sample_evals)
     else:
-        details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=args.fit, sample_evals=args.sample_evals)
+        details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=args.fit)
+        # details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=args.fit, sample_evals=args.sample_evals)
 
     details_path = os.path.join(args.checkpoint, 'details.csv')
     details.to_csv(details_path)

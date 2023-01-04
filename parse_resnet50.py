@@ -120,7 +120,7 @@ def get_test_loss(filename,ids):
     print("test_loss=",test)
 
 
-FILENAME='PL-alpha-tbr'
+FILENAME='PL-alpha-lrtbr' #PL-alpha-wdtbr
 IDS=list(range(36))
 
 get_accs(FILENAME,IDS)
