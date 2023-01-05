@@ -153,14 +153,14 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
     print("Finished evaluating Epoch {}. Test Acc = {}\nTest loss={}\n".format(epoch,testacc,test_loss))
 
     watcher = ww.WeightWatcher(model=net)
-    if not epoch or epoch == 199:
-        figdir = args.checkpoint+'/esd{}'.format(epoch)
-        if not os.path.isdir(figdir):
-            os.makedirs(figdir)
-        details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=args.fit)
-        # details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=args.fit, sample_evals=args.sample_evals)
-    else:
-        details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=args.fit)
+    # if not epoch or epoch == 199:
+    #     figdir = args.checkpoint+'/esd{}'.format(epoch)
+    #     if not os.path.isdir(figdir):
+    #         os.makedirs(figdir)
+    #     details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=args.fit)
+    #     # details = watcher.analyze(mp_fit=True,vectors=False, plot=True, savefig=figdir, fix_fingers=False, fit=args.fit, sample_evals=args.sample_evals)
+    # else:
+    details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=args.fit)
         # details = watcher.analyze(mp_fit=True,vectors=False, fix_fingers=False, fit=args.fit, sample_evals=args.sample_evals)
 
     details_path = os.path.join(args.checkpoint, 'details.csv')
@@ -172,10 +172,8 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
 
     ww_params = []
     other_params = []
-    # for name,para in net.named_modules():
-    #   if (isinstance(para, nn.Linear) or isinstance(para,nn.Sequential) or isinstance(para,nn.Conv2d)) and hasattr(para, 'weight'):
     for name,para in net.named_parameters():
-        if ('conv' in name or 'shortcut.0' in name or 'linear' in name) and ('weight' in name):
+        if (isinstance(para, nn.Linear) or isinstance(para,nn.Sequential) or isinstance(para,nn.Conv2d)) and ('weight' in name):
             ww_params.append(para)
         else:
             other_params.append(para)

@@ -1,7 +1,7 @@
 #!/bin/bash
 datadir=/work/eliciaye
 epochs=200
-depth=50
+depth=50 # 152, 101
 seed=7777
 
 # (fit, metric) = {(E_TPL, alpha), (E_TPL, Lambda), (E_TPL, D), (PL, D)}
