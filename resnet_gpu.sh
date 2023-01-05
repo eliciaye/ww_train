@@ -25,7 +25,7 @@ do
         SAVE=/data/eliciaye/val_experiments/cifar100/$NAME
         mkdir -p $SAVE
         idx=$((6*$i+$j))
-        CUDA_VISIBLE_DEVICES=$j python resnet_train.py --fit $fit --metric $metric --temp_balance_lr $temp_balance --depth $depth --width_frac $width_frac --checkpoint $SAVE --lr $lr --epochs $epochs --seed $seed >>$fit-$metric-lr$temp_balance-$idx.out>&1 &
+        CUDA_VISIBLE_DEVICES=$j python resnet_train.py --fit $fit --metric $metric --temp_balance_lr $temp_balance --depth $depth --width_frac $width_frac --checkpoint $SAVE --lr $lr --epochs $epochs --seed $seed >>$depth-$fit-$metric-lr$temp_balance-$idx.out>&1 &
     done
       
 done
@@ -41,7 +41,7 @@ do
         SAVE=/data/eliciaye/val_experiments/cifar100/$NAME
         mkdir -p $SAVE
         idx=$((6*$i+$j))
-        CUDA_VISIBLE_DEVICES=$j python resnet_train.py --fit $fit --metric $metric --temp_balance_wd $temp_balance --depth $depth --width_frac $width_frac --checkpoint $SAVE --lr $lr --epochs $epochs --seed $seed >>$fit-$metric-wd$temp_balance-$idx.out>&1 &
+        CUDA_VISIBLE_DEVICES=$j python resnet_train.py --fit $fit --metric $metric --temp_balance_wd $temp_balance --depth $depth --width_frac $width_frac --checkpoint $SAVE --lr $lr --epochs $epochs --seed $seed >>$depth-$fit-$metric-wd$temp_balance-$idx.out>&1 &
     done
       
 done
