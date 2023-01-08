@@ -180,9 +180,9 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
     #         other_params.append(para)
     for name,m in net.named_modules():
         if (isinstance(m, nn.Linear) or isinstance(m,nn.Sequential) or isinstance(m,nn.Conv2d)) and hasattr(m, 'weight'):
-            ww_params.append(m.parameters())
+            ww_params.append(m.weight)
         else:
-            other_params.append(m.parameters())
+            other_params.append(m.weight)
 
     n_metrics=[details.loc[i, args.metric] for i in range(n)]
     print(len(n_metrics),"metrics: ",n_metrics)
