@@ -172,12 +172,17 @@ for epoch in range(start_epoch, start_epoch+args.epochs):
 
     ww_params = []
     other_params = []
-    for name,para in net.named_parameters():
-        # if (isinstance(para, nn.Linear) or isinstance(para,nn.Sequential) or isinstance(para,nn.Conv2d)) 
-        if ('conv' in name or 'shortcut.0' in name or 'linear' in name) and ('weight' in name):
-            ww_params.append(para)
+    # for name,para in net.named_parameters():
+    #     # if (isinstance(para, nn.Linear) or isinstance(para,nn.Sequential) or isinstance(para,nn.Conv2d)) 
+    #     if ('conv' in name or 'shortcut.0' in name or 'linear' in name) and ('weight' in name):
+    #         ww_params.append(para)
+    #     else:
+    #         other_params.append(para)
+    for name,m in net.named_modules():
+        if (isinstance(m, nn.Linear) or isinstance(m,nn.Sequential) or isinstance(m,nn.Conv2d)) and hasattr(m, 'weight'):
+            ww_params.append(m.parameters())
         else:
-            other_params.append(para)
+            other_params.append(m.parameters())
 
     n_metrics=[details.loc[i, args.metric] for i in range(n)]
     print(len(n_metrics),"metrics: ",n_metrics)
